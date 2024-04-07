@@ -6,7 +6,7 @@ import requests
 
 pacer_username = os.getenv('PACER_USERNAME')
 pacer_password = os.getenv('PACER_PASSWORD')
-auth_token = os.getenv('AUTH_TOKEN')
+auth_token = os.getenv('COURT_LISTENER_API_KEY')
 
 # Define the payload for the POST request
 
