@@ -1,60 +1,65 @@
+import json
 import os
 
 import requests
+from dotenv import load_dotenv
 
-# Load secrets from environment variables
+load_dotenv()
 
-pacer_username = os.getenv('PACER_USERNAME')
-pacer_password = os.getenv('PACER_PASSWORD')
-auth_token = os.getenv('COURT_LISTENER_API_KEY')
 
-# Define the payload for the POST request
+pacer_username = os.getenv("PACER_USERNAME")
+pacer_password = os.getenv("PACER_PASSWORD")
+auth_token = os.getenv("COURT_LISTENER_API_KEY")
 
-payload = {
-    'request_type': '1',
-    'docket_number': '5:16-cv-00432',
-    'court': 'okwd'
-}
 
-# Define the headers for the POST request
+def get_case_info(request_type=1, docket_number="5:16-cv-00432", court="okwd"):
+    payload = {
+        "request_type": request_type,
+        "docket_number": docket_number,
+        "court": court,
+        "pacer_username": pacer_username,
+        "pacer_password": pacer_password,
+    }
 
-headers = {
-    'Authorization': f'Token {auth_token}'
-}
+    headers = {"Authorization": f"Token {auth_token}"}
 
-# Make the POST request to the API
+    response = requests.post(
+        "https://www.courtlistener.com/api/rest/v3/recap-fetch/",
+        data=payload,
+        headers=headers,
+    )
 
-response = requests.post(
-    'https://www.courtlistener.com/api/rest/v3/recap-fetch/',
-    data=payload,
-    headers=headers,
-    auth=(pacer_username, pacer_password)
-)
+    if response.ok:
+        print("Request successful.")
+        print(json.dumps(response.json(), indent=4))
+        return response.json()
+    else:
+        print("Request failed.")
+        print(response.text)
 
-# Check if the request was successful
 
-if response.ok:
-    print('Request successful.')
-else:
-    print('Request failed.')
+def get_pdf(request_type=2, recap_document=112):
+    pdf_response = requests.post(
+        "https://www.courtlistener.com/api/rest/v3/recap-fetch/",
+        data={
+            "request_type": request_type,
+            "recap_document": recap_document,
+            "pacer_username": pacer_username,
+            "pacer_password": pacer_password,
+        },
+        headers={"Authorization": f"Token {auth_token}"},
+    )
 
-# End of Selection
+    if pdf_response.ok:
+        print("PDF request successful.")
+        return pdf_response.content
+    else:
+        print("PDF request failed.")
+        print(pdf_response.text)
 
-# Make a POST request to fetch a PDF
-pdf_response = requests.post(
-    'https://www.courtlistener.com/api/rest/v3/recap-fetch/',
-    data={
-        'request_type': '2',
-        'recap_document': '112'
-    },
-    headers={
-        'Authorization': f'Token {auth_token}'
-    },
-    auth=(pacer_username, pacer_password)
-)
 
-# Check if the PDF request was successful
-if pdf_response.ok:
-    print('PDF request successful.')
-else:
-    print('PDF request failed.')
+if __name__ == "__main__":
+    get_case_info(
+        request_type=1, docket_number="riches-v-roe-v-wade-410-us-113", court="txnd"
+    )
+    # get_pdf()
