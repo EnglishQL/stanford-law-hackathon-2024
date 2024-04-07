@@ -11,24 +11,24 @@ auth_token = os.getenv('COURT_LISTENER_API_KEY')
 # Define the payload for the POST request
 
 payload = {
-'request_type': '1',
-'docket_number': '5:16-cv-00432',
-'court': 'okwd'
+    'request_type': '1',
+    'docket_number': '5:16-cv-00432',
+    'court': 'okwd'
 }
 
 # Define the headers for the POST request
 
 headers = {
-'Authorization': f'Token {auth_token}'
+    'Authorization': f'Token {auth_token}'
 }
 
 # Make the POST request to the API
 
 response = requests.post(
-'https://www.courtlistener.com/api/rest/v3/recap-fetch/',
-data=payload,
-headers=headers,
-auth=(pacer_username, pacer_password)
+    'https://www.courtlistener.com/api/rest/v3/recap-fetch/',
+    data=payload,
+    headers=headers,
+    auth=(pacer_username, pacer_password)
 )
 
 # Check if the request was successful
