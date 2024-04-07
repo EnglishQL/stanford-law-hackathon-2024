@@ -27,13 +27,14 @@ export default function Home() {
             <p className="mx-auto mt-3 max-w-md text-base text-gray-500 sm:text-lg md:mt-5 md:max-w-3xl md:text-xl">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
             </p>
-
-            <SearchInput
-              setSearchQuery={setSearchQuery}
-              className={
-                "w-full flex justify-center rounded-xl border-gray-300 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-lg"
-              }
-            />
+            <div className="mx-auto mt-5 max-w-md sm:flex sm:justify-center md:mt-8">
+              <SearchInput
+                setSearchQuery={setSearchQuery}
+                className={
+                  "w-full flex justify-center rounded-xl border-gray-300 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-lg"
+                }
+              />
+            </div>
             <SearchButton
               goToResults={goToResults}
               searchQuery={searchQuery}
