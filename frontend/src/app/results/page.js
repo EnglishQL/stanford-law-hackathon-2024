@@ -1,48 +1,52 @@
-const results = {
-  subject: "Re: New pricing for existing customers",
-  sender: "joearmstrong@example.com",
-  status: "Open",
-  items: [
-    {
-      id: 1,
-      author: "Joe Armstrong",
-      date: "Yesterday at 7:24am",
-      datetime: "2021-01-28T19:24",
-      body: "<p>Thanks so much! Can't wait to try it out.</p>",
-    },
-    {
-      id: 2,
-      author: "Monica White",
-      date: "Wednesday at 4:35pm",
-      datetime: "2021-01-27T16:35",
-      body: `
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Malesuada at ultricies tincidunt elit et, enim. Habitant nunc, adipiscing non fermentum, sed est a, aliquet. Lorem in vel libero vel augue aliquet dui commodo.</p>
-          <p>Nec malesuada sed sit ut aliquet. Cras ac pharetra, sapien purus vitae vestibulum auctor faucibus ullamcorper. Leo quam tincidunt porttitor neque, velit sed. Tortor mauris ornare ut tellus sed aliquet amet venenatis condimentum. Convallis accumsan et nunc eleifend.</p>
-          <p><strong style="font-weight: 600;">Monica White</strong><br/>Customer Service</p>
-        `,
-    },
-    {
-      id: 3,
-      author: "Joe Armstrong",
-      date: "Wednesday at 4:09pm",
-      datetime: "2021-01-27T16:09",
-      body: `
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Malesuada at ultricies tincidunt elit et, enim. Habitant nunc, adipiscing non fermentum, sed est a, aliquet. Lorem in vel libero vel augue aliquet dui commodo.</p>
-          <p>Nec malesuada sed sit ut aliquet. Cras ac pharetra, sapien purus vitae vestibulum auctor faucibus ullamcorper. Leo quam tincidunt porttitor neque, velit sed. Tortor mauris ornare ut tellus sed aliquet amet venenatis condimentum. Convallis accumsan et nunc eleifend.</p>
-          <p>– Joe</p>
-        `,
-    },
-  ],
-};
+"use client";
 
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
+
+import SearchInput from "../components/SearchInput";
+import SearchButton from "../components/SearchButton";
 import { HomeIcon } from "@heroicons/react/20/solid";
+import { useRouter } from "next/navigation";
 
-const pages = [
-  { name: "Projects", href: "#", current: false },
-  { name: "Project Nero", href: "#", current: true },
-];
+const pages = [{ name: "Results", href: "#", current: true }];
 
 export default function Results() {
+  const [results, setResults] = useState(null); // [ { title: "Title", content: "Content" }
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+
+  const router = useRouter();
+  const query = searchParams.get("query");
+
+  const goToResults = (query) => {
+    const queryParam = encodeURIComponent(query);
+    console.log(`Searching for ${query}`);
+    router.push(`/results?query=${queryParam}`);
+  };
+
+  const search = useCallback(
+    async (query) => {
+      const response = await fetch("http://localhost:8000/api/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query }),
+      });
+      setResults(await response.json());
+    },
+    [setResults]
+  );
+
+  useEffect(() => {
+    if (query) {
+      search(query);
+    } else {
+      router.push("/");
+    }
+  }, [query, router]);
+
   return (
     <>
       <nav
@@ -55,7 +59,7 @@ export default function Results() {
         >
           <li className="flex">
             <div className="flex items-center">
-              <a href="#" className="text-gray-400 hover:text-gray-500">
+              <a href="/" className="text-gray-400 hover:text-gray-500">
                 <HomeIcon
                   className="h-5 w-5 flex-shrink-0"
                   aria-hidden="true"
@@ -89,28 +93,47 @@ export default function Results() {
           ))}
         </ol>
       </nav>
-
+      <div className="flex flex-row">
+        <SearchInput
+          setSearchQuery={setSearchQuery}
+          className={
+            " flex rounded-xl border-gray-300 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-lg"
+          }
+        />
+        <SearchButton
+          goToResults={goToResults}
+          searchQuery={searchQuery}
+          className={
+            "mt-8 inline-flex rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          }
+        />
+      </div>
       <ul role="list" className="space-y-2 py-4 sm:space-y-4 sm:px-6 lg:px-8">
-        {results.items.map((item) => (
-          <li
-            key={item.id}
-            className="bg-white px-4 py-6 shadow sm:rounded-lg sm:px-6"
-          >
-            <div className="sm:flex sm:items-baseline sm:justify-between">
-              <h3 className="text-base font-medium">
-                <span className="text-gray-900">{item.author}</span>{" "}
-                <span className="text-gray-600">wrote</span>
-              </h3>
-              <p className="mt-1 whitespace-nowrap text-sm text-gray-600 sm:mt-0 sm:ml-3">
-                <time dateTime={item.datetime}>{item.date}</time>
-              </p>
-            </div>
-            <div
+        {results &&
+          results.length > 0 &&
+          results.map((item) => (
+            <li
+              key={item.id}
+              className="bg-white px-4 py-6 shadow sm:rounded-lg sm:px-6"
+            >
+              <div className="sm:flex sm:items-baseline sm:justify-between">
+                <h3 className="text-base font-medium">
+                  <span className="text-gray-900">{item.assigned_to}</span>{" "}
+                  <span className="text-gray-600">wrote</span>
+                </h3>
+                <p className="mt-1 whitespace-nowrap text-sm text-gray-600 sm:mt-0 sm:ml-3">
+                  <time dateTime={item.datetime}>{item.date_filed}</time>
+                </p>
+              </div>
+              <div className="mt-4 space-y-6 text-sm text-gray-800">
+                {item.text}
+              </div>
+              {/* <div
               className="mt-4 space-y-6 text-sm text-gray-800"
               dangerouslySetInnerHTML={{ __html: item.body }}
-            />
-          </li>
-        ))}
+            /> */}
+            </li>
+          ))}
       </ul>
     </>
   );

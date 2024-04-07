@@ -1,17 +1,18 @@
 "use client";
 import { useState } from "react";
+import SearchInput from "./components/SearchInput";
+import SearchButton from "./components/SearchButton";
+
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
-  const search = async (query) => {
-    const response = await fetch("http://localhost:8000/api/search", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query }),
-    });
+  const goToResults = (query) => {
+    const queryParam = encodeURIComponent(query);
+    console.log(`Searching for ${query}`);
+    router.push(`/results?query=${queryParam}`);
   };
 
   return (
@@ -27,33 +28,19 @@ export default function Home() {
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
             </p>
 
-            <div className="mx-auto mt-5 max-w-md sm:flex sm:justify-center md:mt-8">
-              <textarea
-                name="name"
-                id="name"
-                className="w-full flex justify-center rounded-xl border-gray-300 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-lg"
-                rows="0"
-                placeholder="Tell me what you're looking for..."
-                style={{ resize: "none" }}
-                onInput={(e) => {
-                  setSearchQuery(e.target.value);
-                  e.target.style.height = "inherit";
-                  e.target.style.height = `${Math.min(
-                    e.target.scrollHeight,
-                    10 * 18
-                  )}px`; // 24 is an estimated line height
-                }}
-              ></textarea>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                search(searchQuery);
-              }}
-              className="mt-8 inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              Search
-            </button>
+            <SearchInput
+              setSearchQuery={setSearchQuery}
+              className={
+                "w-full flex justify-center rounded-xl border-gray-300 px-4 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-lg"
+              }
+            />
+            <SearchButton
+              goToResults={goToResults}
+              searchQuery={searchQuery}
+              className={
+                "mt-8 inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              }
+            />
           </div>
         </main>
       </div>

@@ -117,6 +117,11 @@ if __name__ == "__main__":
 
     url_list = [x["download_url"] for x in list_result_filtered]
 
+    # Save the filtered results to a JSON file in the data directory
+    with open("data/list_result_filtered.json", "w") as json_file:
+        json.dump(list_result_filtered, json_file, indent=4)
+    print("Filtered results saved to data/list_result_filtered.json")
+
     print(url_list)
     for url in url_list:
         download_file_from_url(url, "data")
