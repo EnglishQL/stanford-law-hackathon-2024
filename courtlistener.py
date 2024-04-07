@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 import requests
 from dotenv import load_dotenv
@@ -12,11 +13,45 @@ pacer_password = os.getenv("PACER_PASSWORD")
 auth_token = os.getenv("COURT_LISTENER_API_KEY")
 
 
-def get_case_info(request_type=1, docket_number="5:16-cv-00432", court="okwd"):
+def search_court_listener(query, type=None):
+    search_url = "https://www.courtlistener.com/api/rest/v3/search/"
+    params = {"q": query, "type": type if type else None}
+    headers = {"Authorization": f"Token {auth_token}"}
+
+    response = requests.get(search_url, params=params, headers=headers)
+
+    if response.ok:
+        print("Search successful.")
+
+        # Create a directory for storing data if it doesn't exist
+        os.makedirs("data_json", exist_ok=True)
+        # Generate a timestamped filename
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"data_json/{timestamp}_{query}.json"
+        # Save the JSON data to the file
+        with open(filename, "w") as f:
+            json.dump(response.json(), f, indent=4)
+        print(f"Data saved to {filename}")
+        print(json.dumps(response.json(), indent=4))
+
+        return response.json()
+    else:
+        print("Search failed.")
+        print(response.text)
+        return None
+
+
+def get_case_info(
+    request_type=1,
+    docket_number="5:16-cv-00432",
+    court="okwd",
+    recap_document=None,
+):
     payload = {
-        "request_type": request_type,
-        "docket_number": docket_number,
-        "court": court,
+        "request_type": request_type if request_type else None,
+        "recap_document": recap_document if recap_document else None,
+        "docket_number": docket_number if docket_number else None,
+        "court": court if court else None,
         "pacer_username": pacer_username,
         "pacer_password": pacer_password,
     }
@@ -38,28 +73,50 @@ def get_case_info(request_type=1, docket_number="5:16-cv-00432", court="okwd"):
         print(response.text)
 
 
-def get_pdf(request_type=2, recap_document=112):
-    pdf_response = requests.post(
-        "https://www.courtlistener.com/api/rest/v3/recap-fetch/",
-        data={
-            "request_type": request_type,
-            "recap_document": recap_document,
-            "pacer_username": pacer_username,
-            "pacer_password": pacer_password,
-        },
-        headers={"Authorization": f"Token {auth_token}"},
-    )
+def get_download_url(filepath_local):
+    filepath_local = filepath_local.replace("/storage", "")
 
-    if pdf_response.ok:
-        print("PDF request successful.")
-        return pdf_response.content
-    else:
-        print("PDF request failed.")
-        print(pdf_response.text)
+    return f"https://storage.courtlistener.com{filepath_local}"
+
+
+def download_file_from_url(url, path):
+    response = requests.get(url)
+
+    if response.ok:
+        filepath = os.path.join(path, url.split("/")[-1])
+        print(filepath)
+        with open(filepath, "wb") as f:
+            f.write(response.content)
+        print(f"File saved to {path}")
 
 
 if __name__ == "__main__":
-    get_case_info(
-        request_type=1, docket_number="riches-v-roe-v-wade-410-us-113", court="txnd"
-    )
-    # get_pdf()
+    query = "3:07-CV-1697-B"
+    results = search_court_listener(query, type="r")
+    list_results = results["results"]
+    list_result_filtered = []
+    for list_result in list_results:
+        legal_info = {
+            "case_name": list_result["caseName"],
+            "docket_number": list_result["docketNumber"],
+            "court": list_result["court"],
+            "date_filed": list_result["dateFiled"],
+            "date_terminated": list_result["dateTerminated"],
+            "assigned_to": list_result["assignedTo"],
+            "cause": list_result["cause"],
+            "jurisdiction_type": list_result["jurisdictionType"],
+            "suit_nature": list_result["suitNature"],
+            "document_number": list_result["document_number"],
+            "page_count": list_result["page_count"],
+            "is_available": list_result["is_available"],
+            "filepath_local": list_result["filepath_local"],
+            "download_url": get_download_url(list_result["filepath_local"]),
+            "description": list_result["description"],
+        }
+        list_result_filtered.append(legal_info)
+
+    url_list = [x["download_url"] for x in list_result_filtered]
+
+    print(url_list)
+    for url in url_list:
+        download_file_from_url(url, "data")
