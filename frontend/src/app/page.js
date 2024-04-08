@@ -4,6 +4,8 @@ import SearchInput from "./components/SearchInput";
 import SearchButton from "./components/SearchButton";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import courtListenerLogo from "../../public/courtlistener.svg";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,6 +44,16 @@ export default function Home() {
                 "mt-8 inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               }
             />
+            <div className="flex flex-col mt-12 justify-center">
+              {"Data sourced from"}
+              <Image
+                className="mx-auto  max-w-md sm:flex sm:justify-center mt-2"
+                src={courtListenerLogo}
+                alt="CourtListener Logo"
+                width={200} // Set the width as needed
+                height={300} // Set the height as needed
+              />
+            </div>
           </div>
         </main>
       </div>

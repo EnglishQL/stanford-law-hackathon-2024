@@ -2,19 +2,20 @@ import json
 import os
 from datetime import datetime
 
+# import nest_asyncio
 import requests
 from dotenv import load_dotenv
-from llama_index.core import SimpleDirectoryReader
-from llama_parse import LlamaParse
-from llama_index.llms.openai import OpenAI
+from llama_index.core import (
+    DocumentSummaryIndex,
+    SimpleDirectoryReader,
+    get_response_synthesizer,
+)
 from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core import DocumentSummaryIndex
-from llama_index.core import get_response_synthesizer
-import nest_asyncio
-
+from llama_index.llms.openai import OpenAI
+from llama_parse import LlamaParse
 
 load_dotenv()
-nest_asyncio.apply()
+# nest_asyncio.apply()
 
 pacer_username = os.getenv("PACER_USERNAME")
 pacer_password = os.getenv("PACER_PASSWORD")
@@ -164,10 +165,10 @@ if __name__ == "__main__":
 
     url_list = [x["download_url"] for x in list_result_filtered]
 
-    # Save the filtered results to a JSON file in the data directory
-    with open("data/list_result_filtered.json", "w") as json_file:
-        json.dump(list_result_filtered, json_file, indent=4)
-    print("Filtered results saved to data/list_result_filtered.json")
+    # # Save the filtered results to a JSON file in the data directory
+    # with open("data/list_result_filtered.json", "w") as json_file:
+    #     json.dump(list_result_filtered, json_file, indent=4)
+    # print("Filtered results saved to data/list_result_filtered.json")
 
     print(url_list)
     for url in url_list:

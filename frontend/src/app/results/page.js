@@ -73,20 +73,22 @@ export default function Results() {
             >
               <div className="sm:flex sm:items-baseline sm:justify-between">
                 <h3 className="text-base font-medium">
-                  <span className="text-gray-900">{item.assigned_to}</span>{" "}
+                  <span className="text-gray-900">{item.case_name}</span>{" "}
                   <span className="text-gray-600">wrote</span>
                 </h3>
                 <p className="mt-1 whitespace-nowrap text-sm text-gray-600 sm:mt-0 sm:ml-3">
                   <time dateTime={item.datetime}>{item.date_filed}</time>
                 </p>
               </div>
-              <div className="mt-4 space-y-6 text-sm text-gray-800">
+              {/* <div className="mt-4 space-y-6 text-sm text-gray-800">
                 {item.text}
+              </div> */}
+              <div
+                className="mt-8"
+                style={{ maxHeight: "7em", overflowY: "auto" }}
+              >
+                <pre>{item.text}</pre>
               </div>
-              {/* <div
-              className="mt-4 space-y-6 text-sm text-gray-800"
-              dangerouslySetInnerHTML={{ __html: item.body }}
-            /> */}
             </li>
           ))}
       </ul>
