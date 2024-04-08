@@ -4,13 +4,24 @@ from datetime import datetime
 
 import requests
 from dotenv import load_dotenv
+from llama_index.core import SimpleDirectoryReader
+from llama_parse import LlamaParse
+from llama_index.llms.openai import OpenAI
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core import DocumentSummaryIndex
+from llama_index.core import get_response_synthesizer
+import nest_asyncio
+
 
 load_dotenv()
-
+nest_asyncio.apply()
 
 pacer_username = os.getenv("PACER_USERNAME")
 pacer_password = os.getenv("PACER_PASSWORD")
 auth_token = os.getenv("COURT_LISTENER_API_KEY")
+llama_cloud_api_key = os.getenv("LLAMA_CLOUD_API_KEY")
+
+FILES_METADATA = dict()
 
 
 def search_court_listener(query, type=None):
@@ -90,6 +101,40 @@ def download_file_from_url(url, path):
         print(f"File saved to {path}")
 
 
+def get_file_metadata(filename):
+    fname = filename.split("/")[-1]
+    return FILES_METADATA[fname]
+
+
+def build_index():
+    # Use LlamaParse to extract text from PDFs.
+    parser = LlamaParse(
+        api_key=llama_cloud_api_key,
+        result_type="text",
+        verbose=True,
+    )
+    file_extractor = {".pdf": parser}
+    documents = SimpleDirectoryReader(
+        "./data",
+        file_extractor=file_extractor,
+        file_metadata=get_file_metadata,
+    ).load_data()
+
+    chatgpt = OpenAI(temperature=0, model="gpt-3.5-turbo")
+    splitter = SentenceSplitter(chunk_size=1024)
+    response_synthesizer = get_response_synthesizer(
+        response_mode="tree_summarize", use_async=True
+    )
+    doc_summary_index = DocumentSummaryIndex.from_documents(
+        documents,
+        llm=chatgpt,
+        transformations=[splitter],
+        response_synthesizer=response_synthesizer,
+        show_progress=True,
+    )
+    doc_summary_index.storage_context.persist(persist_dir="./citation")
+
+
 if __name__ == "__main__":
     query = "3:07-CV-1697-B"
     results = search_court_listener(query, type="r")
@@ -114,6 +159,8 @@ if __name__ == "__main__":
             "description": list_result["description"],
         }
         list_result_filtered.append(legal_info)
+        fname = list_result["filepath_local"].split("/")[-1]
+        FILES_METADATA[fname] = legal_info
 
     url_list = [x["download_url"] for x in list_result_filtered]
 
@@ -124,4 +171,9 @@ if __name__ == "__main__":
 
     print(url_list)
     for url in url_list:
-        download_file_from_url(url, "data")
+        try:
+            download_file_from_url(url, "data")
+        except Exception as e:
+            print(e)
+
+    build_index()
