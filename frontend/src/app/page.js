@@ -26,9 +26,9 @@ export default function Home() {
               <span className="block xl:inline">Powerful semantic search</span>{" "}
               <span className="block text-indigo-600 xl:inline">for PACER</span>
             </h1>
-            <p className="mx-auto mt-3 max-w-md text-base text-gray-500 sm:text-lg md:mt-5 md:max-w-3xl md:text-xl">
+            {/* <p className="mx-auto mt-3 max-w-md text-base text-gray-500 sm:text-lg md:mt-5 md:max-w-3xl md:text-xl">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-            </p>
+            </p> */}
             <div className="mx-auto mt-5 max-w-md sm:flex sm:justify-center md:mt-8">
               <SearchInput
                 setSearchQuery={setSearchQuery}

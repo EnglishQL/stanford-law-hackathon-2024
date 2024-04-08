@@ -86,6 +86,7 @@ def get_case_info(
 
 
 def get_download_url(filepath_local):
+    print(filepath_local)
     filepath_local = filepath_local.replace("/storage", "")
 
     return f"https://storage.courtlistener.com{filepath_local}"
@@ -137,11 +138,13 @@ def build_index():
 
 
 if __name__ == "__main__":
-    query = "3:07-CV-1697-B"
+    query = "foreclosure"
     results = search_court_listener(query, type="r")
     list_results = results["results"]
     list_result_filtered = []
-    for list_result in list_results:
+    for list_result in list_results[0:100]:
+        if list_result["is_available"] is False:
+            continue
         legal_info = {
             "case_name": list_result["caseName"],
             "docket_number": list_result["docketNumber"],
