@@ -25,16 +25,39 @@ llama_cloud_api_key = os.getenv("LLAMA_CLOUD_API_KEY")
 FILES_METADATA = dict()
 
 
-def search_court_listener(query, type=None):
+def search_court_listener(query, type=None, start_page=1, max_pages=None):
     search_url = "https://www.courtlistener.com/api/rest/v3/search/"
-    params = {"q": query, "type": type if type else None}
-    headers = {"Authorization": f"Token {auth_token}"}
+    all_results = []
+    current_page = start_page
+    while True:
+        params = {
+            "q": query,
+            "type": type if type else None,
+            "page": current_page,
+        }
+        headers = {"Authorization": f"Token {auth_token}"}
 
-    response = requests.get(search_url, params=params, headers=headers)
+        response = requests.get(search_url, params=params, headers=headers)
 
-    if response.ok:
-        print("Search successful.")
+        if response.ok:
+            print(f"Search successful for page {current_page}.")
+            data = response.json()
+            all_results.extend(data.get("results", []))
 
+            # Check if there is a next page and if max_pages limit is not reached
+            next_page = data.get("next")
+            if next_page and (
+                max_pages is None or current_page < start_page + max_pages - 1
+            ):
+                current_page += 1
+            else:
+                break
+        else:
+            print(f"Search failed for page {current_page}.")
+            print(response.text)
+            break
+
+    if all_results:
         # Create a directory for storing data if it doesn't exist
         os.makedirs("data_json", exist_ok=True)
         # Generate a timestamped filename
@@ -42,15 +65,11 @@ def search_court_listener(query, type=None):
         filename = f"data_json/{timestamp}_{query}.json"
         # Save the JSON data to the file
         with open(filename, "w") as f:
-            json.dump(response.json(), f, indent=4)
+            json.dump(all_results, f, indent=4)
         print(f"Data saved to {filename}")
-        print(json.dumps(response.json(), indent=4))
+        print(json.dumps(all_results, indent=4))
 
-        return response.json()
-    else:
-        print("Search failed.")
-        print(response.text)
-        return None
+    return all_results if all_results else None
 
 
 def get_case_info(
@@ -138,11 +157,16 @@ def build_index():
 
 
 if __name__ == "__main__":
-    query = "foreclosure"
-    results = search_court_listener(query, type="r")
+    query = "bitcoin"
+    max_pages = 2
+    results = search_court_listener(query, type="r", max_pages=max_pages)
+
+    results = {"results": results, "count": len(results)}
+    count = results["count"]
     list_results = results["results"]
     list_result_filtered = []
-    for list_result in list_results[0:100]:
+    print(len(list_results))
+    for list_result in list_results:
         if list_result["is_available"] is False:
             continue
         legal_info = {
@@ -176,6 +200,7 @@ if __name__ == "__main__":
     print(url_list)
     for url in url_list:
         try:
+            url = url.replace("comrecap", "com/recap")
             download_file_from_url(url, "data")
         except Exception as e:
             print(e)
